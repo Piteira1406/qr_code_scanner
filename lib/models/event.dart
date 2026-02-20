@@ -49,55 +49,36 @@ class Event {
   }
 
   /// Creates an Event from QR Code data.
-  ///
-  /// DEMO MODE: Currently accepts any QR code and creates a demo event.
-  /// The original format validation is preserved below for future use.
-  ///
-  /// Original QR Code format: eventId|eventName|description|latitude|longitude|startTime|endTime|location
+  /// QR Code format: ISTEC|eventId|eventName|description|latitude|longitude|startTime|endTime|location
+  /// The ISTEC prefix ensures only valid ISTEC QR codes are accepted.
   factory Event.fromQRCode(String qrData) {
-    // ============================================================
-    // DEMO MODE - Accept any QR code
-    // ============================================================
-    // For demonstration purposes, any scanned QR code will create
-    // a valid event. The QR code content becomes the event name.
+    final parts = qrData.split('|');
 
-    final now = DateTime.now();
-    return Event(
-      id: 'demo_${now.millisecondsSinceEpoch}',
-      name: qrData.length > 50 ? '${qrData.substring(0, 50)}...' : qrData,
-      description: 'Evento criado a partir de QR Code scaneado',
-      latitude: 0.0, // Will be overridden with user's actual location
-      longitude: 0.0, // Will be overridden with user's actual location
-      startTime: now,
-      endTime: now.add(const Duration(hours: 2)),
-      location: 'Localização verificada por GPS',
-    );
+    // Validate format: must have ISTEC prefix and 9 parts
+    if (parts.length < 9 || parts[0] != 'ISTEC') {
+      throw FormatException('QR Code Inválido: formato incorreto');
+    }
 
-    // ============================================================
-    // ORIGINAL FORMAT VALIDATION (stand-by para uso futuro)
-    // ============================================================
-    // Uncomment the code below to enable strict QR code format validation:
-    //
-    // final parts = qrData.split('|');
-    // if (parts.length < 8) {
-    //   throw FormatException('QR Code Inválido: formato incorreto');
-    // }
-    //
-    // try {
-    //   return Event(
-    //     id: parts[0],
-    //     name: parts[1],
-    //     description: parts[2],
-    //     latitude: double.parse(parts[3]),
-    //     longitude: double.parse(parts[4]),
-    //     startTime: DateTime.parse(parts[5]),
-    //     endTime: DateTime.parse(parts[6]),
-    //     location: parts[7],
-    //   );
-    // } catch (e) {
-    //   throw FormatException('QR Code Inválido: dados corrompidos');
-    // }
-    // ============================================================
+    try {
+      return Event(
+        id: parts[1],
+        name: parts[2],
+        description: parts[3],
+        latitude: double.parse(parts[4]),
+        longitude: double.parse(parts[5]),
+        startTime: DateTime.parse(parts[6]),
+        endTime: DateTime.parse(parts[7]),
+        location: parts[8],
+      );
+    } catch (e) {
+      throw FormatException('QR Code Inválido: dados corrompidos');
+    }
+  }
+
+  /// Generates QR code data string for this event.
+  /// Format: ISTEC|eventId|eventName|description|latitude|longitude|startTime|endTime|location
+  String toQRCodeData() {
+    return 'ISTEC|$id|$name|$description|$latitude|$longitude|${startTime.toIso8601String()}|${endTime.toIso8601String()}|$location';
   }
 
   @override

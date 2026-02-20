@@ -43,3 +43,31 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configuration (contains API keys)
+lib/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
+firebase.json
+.firebaserc
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Local configuration
+local.properties
+*.local
+
+# Keystore files
+*.jks
+*.keystore
+key.properties
+
+# Secrets
+secrets/
+**/secrets.*
+
+# Generated files that may contain sensitive data
+*.g.dart

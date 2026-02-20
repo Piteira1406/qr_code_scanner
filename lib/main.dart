@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/providers.dart';
 import 'screens/screens.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -65,10 +71,7 @@ class _AppInitializerState extends State<AppInitializer> {
     final checkInProvider = context.read<CheckInProvider>();
 
     // Initialize providers
-    await Future.wait([
-      authProvider.init(),
-      checkInProvider.init(),
-    ]);
+    await Future.wait([authProvider.init(), checkInProvider.init()]);
 
     if (mounted) {
       setState(() => _isInitialized = true);
@@ -87,18 +90,10 @@ class _AppInitializerState extends State<AppInitializer> {
               SizedBox(height: 24),
               Text(
                 'ISTEC Check-in',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
-              Text(
-                'A carregar...',
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
+              Text('A carregar...', style: TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -107,6 +102,10 @@ class _AppInitializerState extends State<AppInitializer> {
 
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        // Sync user ID with CheckInProvider for Firestore queries
+        final checkInProvider = context.read<CheckInProvider>();
+        checkInProvider.setUserId(authProvider.currentUser?.id);
+
         if (authProvider.isAuthenticated) {
           return const HomeScreen();
         }

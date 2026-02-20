@@ -3,22 +3,24 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
-import 'register_screen.dart';
 
-/// Login screen for student authentication.
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+/// Registration screen for new users.
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   late AnimationController _animationController;
@@ -46,27 +48,30 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(
+    final success = await authProvider.register(
       _emailController.text.trim(),
       _passwordController.text,
+      _nameController.text.trim(),
     );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               const HomeScreen(),
@@ -75,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen>
           },
           transitionDuration: const Duration(milliseconds: 300),
         ),
+        (route) => false,
       );
     } else if (authProvider.errorMessage != null) {
       _showErrorSnackBar(authProvider.errorMessage!);
@@ -117,12 +123,13 @@ class _LoginScreenState extends State<LoginScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 60),
+                      const SizedBox(height: 40),
                       _buildHeader(),
-                      const SizedBox(height: 48),
-                      _buildLoginCard(),
+                      const SizedBox(height: 32),
+                      _buildRegisterCard(),
                       const SizedBox(height: 24),
-                      _buildInfoText(),
+                      _buildLoginLink(),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -137,35 +144,62 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildHeader() {
     return Column(
       children: [
-        // Animated logo with gradient
+        // Back button
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Logo
         Container(
-          width: 100,
-          height: 100,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
             gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primaryStart.withValues(alpha: 0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: const Icon(
-            Icons.qr_code_scanner_rounded,
-            size: 48,
+            Icons.person_add_rounded,
+            size: 40,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         ShaderMask(
           shaderCallback: (bounds) =>
               AppColors.primaryGradient.createShader(bounds),
           child: const Text(
-            'ISTEC Check-in',
+            'Criar Conta',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -173,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          'Sistema de Presenças Digital',
+          'Registe-se para aceder ao sistema',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -182,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginCard() {
+  Widget _buildRegisterCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -199,72 +233,61 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Bem-vindo de volta', style: AppTextStyles.headlineMedium),
-          const SizedBox(height: 4),
-          Text(
-            'Introduza as suas credenciais para continuar',
-            style: AppTextStyles.bodyMedium,
-          ),
-          const SizedBox(height: 28),
+          _buildNameField(),
+          const SizedBox(height: 16),
           _buildEmailField(),
           const SizedBox(height: 16),
           _buildPasswordField(),
-          const SizedBox(height: 28),
-          _buildLoginButton(),
-          const SizedBox(height: 20),
-          _buildRegisterLink(),
+          const SizedBox(height: 16),
+          _buildConfirmPasswordField(),
+          const SizedBox(height: 24),
+          _buildRoleInfo(),
+          const SizedBox(height: 24),
+          _buildRegisterButton(),
         ],
       ),
     );
   }
 
-  Widget _buildRegisterLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Não tem conta? ',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const RegisterScreen(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                      return SlideTransition(
-                        position:
-                            Tween<Offset>(
-                              begin: const Offset(1.0, 0.0),
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOut,
-                              ),
-                            ),
-                        child: child,
-                      );
-                    },
-                transitionDuration: const Duration(milliseconds: 300),
-              ),
-            );
-          },
-          child: ShaderMask(
-            shaderCallback: (bounds) =>
-                AppColors.primaryGradient.createShader(bounds),
-            child: const Text(
-              'Criar Conta',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+        Text('Nome Completo', style: AppTextStyles.labelMedium),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _nameController,
+          keyboardType: TextInputType.name,
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.words,
+          style: AppTextStyles.bodyLarge,
+          decoration: InputDecoration(
+            hintText: 'João Silva',
+            prefixIcon: Container(
+              padding: const EdgeInsets.all(12),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryStart.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.badge_outlined,
+                  color: AppColors.primaryStart,
+                  size: 20,
+                ),
               ),
             ),
           ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Por favor, introduza o seu nome';
+            }
+            if (value.trim().length < 2) {
+              return 'O nome deve ter pelo menos 2 caracteres';
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -274,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Email ou Número de Aluno', style: AppTextStyles.labelMedium),
+        Text('Email Institucional', style: AppTextStyles.labelMedium),
         const SizedBox(height: 8),
         TextFormField(
           controller: _emailController,
@@ -292,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.person_outline_rounded,
+                  Icons.email_outlined,
                   color: AppColors.primaryStart,
                   size: 20,
                 ),
@@ -301,7 +324,10 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Por favor, introduza o seu email ou número de aluno';
+              return 'Por favor, introduza o seu email';
+            }
+            if (!value.contains('@')) {
+              return 'Por favor, introduza um email válido';
             }
             return null;
           },
@@ -319,8 +345,7 @@ class _LoginScreenState extends State<LoginScreen>
         TextFormField(
           controller: _passwordController,
           obscureText: _obscurePassword,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => _handleLogin(),
+          textInputAction: TextInputAction.next,
           style: AppTextStyles.bodyLarge,
           decoration: InputDecoration(
             hintText: '••••••••',
@@ -353,10 +378,10 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Por favor, introduza a sua password';
+              return 'Por favor, introduza uma password';
             }
-            if (value.length < 4) {
-              return 'A password deve ter pelo menos 4 caracteres';
+            if (value.length < 6) {
+              return 'A password deve ter pelo menos 6 caracteres';
             }
             return null;
           },
@@ -365,7 +390,103 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildConfirmPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Confirmar Password', style: AppTextStyles.labelMedium),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _confirmPasswordController,
+          obscureText: _obscureConfirmPassword,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => _handleRegister(),
+          style: AppTextStyles.bodyLarge,
+          decoration: InputDecoration(
+            hintText: '••••••••',
+            prefixIcon: Container(
+              padding: const EdgeInsets.all(12),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryStart.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: AppColors.primaryStart,
+                  size: 20,
+                ),
+              ),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppColors.textTertiary,
+              ),
+              onPressed: () {
+                setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                );
+              },
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Por favor, confirme a password';
+            }
+            if (value != _passwordController.text) {
+              return 'As passwords não coincidem';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleInfo() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.infoLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tipo de conta',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.info,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Para conta de professor, use email com prefixo "prof." (ex: prof.silva@istec.pt)',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.info,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegisterButton() {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -384,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
         ),
         child: ElevatedButton(
-          onPressed: _isLoading ? null : _handleLogin,
+          onPressed: _isLoading ? null : _handleRegister,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
@@ -405,7 +526,7 @@ class _LoginScreenState extends State<LoginScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Entrar',
+                      'Criar Conta',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -414,7 +535,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     SizedBox(width: 8),
                     Icon(
-                      Icons.arrow_forward_rounded,
+                      Icons.person_add_rounded,
                       size: 20,
                       color: Colors.white,
                     ),
@@ -425,26 +546,31 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildInfoText() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.infoLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Use as suas credenciais institucionais para aceder ao sistema de presenças.',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.info),
+  Widget _buildLoginLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Já tem conta? ',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: ShaderMask(
+            shaderCallback: (bounds) =>
+                AppColors.primaryGradient.createShader(bounds),
+            child: const Text(
+              'Iniciar Sessão',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/models.dart';
@@ -23,10 +24,14 @@ enum CheckInErrorType {
 }
 
 /// Provider responsible for managing the check-in process.
+/// Uses Firestore for persistent storage with real-time sync.
 class CheckInProvider extends ChangeNotifier {
   final LocationService _locationService;
   final ConnectivityService _connectivityService;
   final StorageService _storageService;
+  final FirebaseService _firebaseService;
+  StreamSubscription<List<CheckIn>>? _checkInsSubscription;
+  String? _currentUserId;
 
   CheckInState _state = CheckInState.idle;
   CheckInErrorType? _errorType;
@@ -40,9 +45,11 @@ class CheckInProvider extends ChangeNotifier {
     LocationService? locationService,
     ConnectivityService? connectivityService,
     StorageService? storageService,
+    FirebaseService? firebaseService,
   }) : _locationService = locationService ?? LocationService(),
        _connectivityService = connectivityService ?? ConnectivityService(),
-       _storageService = storageService ?? StorageService();
+       _storageService = storageService ?? StorageService(),
+       _firebaseService = firebaseService ?? FirebaseService();
 
   // Getters
   CheckInState get state => _state;
@@ -58,10 +65,49 @@ class CheckInProvider extends ChangeNotifier {
       _state == CheckInState.validatingLocation ||
       _state == CheckInState.processing;
 
-  /// Initializes the provider by loading check-in history.
-  Future<void> init() async {
+  /// Initializes the provider with user ID for Firestore queries.
+  Future<void> init({String? userId}) async {
     await _storageService.init();
-    await loadHistory();
+    _currentUserId = userId;
+
+    if (userId != null) {
+      // Subscribe to real-time check-in updates from Firestore
+      _checkInsSubscription = _firebaseService
+          .getUserCheckIns(userId)
+          .listen(
+            (checkIns) {
+              _checkInHistory = checkIns;
+              notifyListeners();
+            },
+            onError: (error) {
+              debugPrint('Error loading check-ins: $error');
+              // Fall back to local storage
+              loadHistory();
+            },
+          );
+    } else {
+      await loadHistory();
+    }
+  }
+
+  /// Sets the current user ID for Firestore queries.
+  void setUserId(String? userId) {
+    if (userId != _currentUserId) {
+      _checkInsSubscription?.cancel();
+      _currentUserId = userId;
+
+      if (userId != null) {
+        _checkInsSubscription = _firebaseService.getUserCheckIns(userId).listen(
+          (checkIns) {
+            _checkInHistory = checkIns;
+            notifyListeners();
+          },
+        );
+      } else {
+        _checkInHistory = [];
+        notifyListeners();
+      }
+    }
   }
 
   /// Loads the check-in history from local storage.
@@ -83,8 +129,10 @@ class CheckInProvider extends ChangeNotifier {
 
   /// Processes a scanned QR code and validates the check-in.
   ///
-  /// DEMO MODE: Location validation is performed but any QR code is accepted.
-  /// The event location is set to the user's current position for demonstration.
+  /// Validates:
+  /// 1. Network connectivity
+  /// 2. QR code format (must be ISTEC format)
+  /// 3. User location (must be within 100m of event location)
   Future<bool> processQRCode(String qrData) async {
     _clearErrors();
 
@@ -98,48 +146,21 @@ class CheckInProvider extends ChangeNotifier {
       return false;
     }
 
-    // Step 2: Get user's current location first (needed for demo mode)
-    _state = CheckInState.validatingLocation;
-    notifyListeners();
-
-    try {
-      _currentPosition = await _locationService.getCurrentPosition();
-    } on LocationServiceException catch (e) {
-      _setError(CheckInErrorType.permissionDenied, e.message);
-      return false;
-    } catch (e) {
-      _setError(CheckInErrorType.unknown, 'Erro ao obter localização');
-      return false;
-    }
-
-    // Step 3: Parse QR Code (demo mode - accepts any QR code)
+    // Step 2: Parse QR Code (strict ISTEC format validation)
     _state = CheckInState.processing;
     notifyListeners();
 
     try {
       _currentEvent = Event.fromQRCode(qrData);
-
-      // ============================================================
-      // DEMO MODE: Override event location with user's current position
-      // This ensures location validation always passes for demonstration
-      // ============================================================
-      _currentEvent = Event(
-        id: _currentEvent!.id,
-        name: _currentEvent!.name,
-        description: _currentEvent!.description,
-        latitude: _currentPosition!.latitude,
-        longitude: _currentPosition!.longitude,
-        startTime: _currentEvent!.startTime,
-        endTime: _currentEvent!.endTime,
-        location: _currentEvent!.location,
-      );
-      // ============================================================
     } catch (e) {
-      _setError(CheckInErrorType.invalidQRCode, 'QR Code Inválido');
+      _setError(
+        CheckInErrorType.invalidQRCode,
+        'QR Code Inválido - Este QR Code não é válido para o sistema ISTEC',
+      );
       return false;
     }
 
-    // Step 4: Validate location (will pass in demo mode since we set event coords = user coords)
+    // Step 3: Validate user location against event location
     _state = CheckInState.validatingLocation;
     notifyListeners();
 
@@ -167,7 +188,7 @@ class CheckInProvider extends ChangeNotifier {
       return false;
     }
 
-    // Step 5: Create and save check-in
+    // Step 4: Create and save check-in to Firestore
     _state = CheckInState.processing;
     notifyListeners();
 
@@ -179,8 +200,18 @@ class CheckInProvider extends ChangeNotifier {
         distance: _distanceToEvent!,
       );
 
+      // Save to Firestore if user is logged in
+      if (_currentUserId != null) {
+        await _firebaseService.saveCheckIn(checkIn, _currentUserId!);
+      }
+
+      // Also save locally as backup
       await _storageService.saveCheckIn(checkIn);
-      _checkInHistory.insert(0, checkIn);
+
+      // Update local list if not using real-time sync
+      if (_currentUserId == null) {
+        _checkInHistory.insert(0, checkIn);
+      }
 
       _state = CheckInState.success;
       notifyListeners();
@@ -198,7 +229,9 @@ class CheckInProvider extends ChangeNotifier {
     required double eventLatitude,
     required double eventLongitude,
   }) async {
+    // Generate QR data in ISTEC format
     final mockQRData =
+        'ISTEC|'
         'mock_${DateTime.now().millisecondsSinceEpoch}|'
         '$eventName|'
         'Evento de demonstração|'
@@ -228,15 +261,9 @@ class CheckInProvider extends ChangeNotifier {
   }
 
   /// Generates a QR code string for a given event.
+  /// Format: ISTEC|eventId|eventName|description|latitude|longitude|startTime|endTime|location
   static String generateQRCodeData(Event event) {
-    return '${event.id}|'
-        '${event.name}|'
-        '${event.description}|'
-        '${event.latitude}|'
-        '${event.longitude}|'
-        '${event.startTime.toIso8601String()}|'
-        '${event.endTime.toIso8601String()}|'
-        '${event.location}';
+    return event.toQRCodeData();
   }
 
   /// Resets the check-in state to idle.
@@ -273,6 +300,7 @@ class CheckInProvider extends ChangeNotifier {
   /// Disposes of resources.
   @override
   void dispose() {
+    _checkInsSubscription?.cancel();
     _locationService.dispose();
     _connectivityService.dispose();
     super.dispose();

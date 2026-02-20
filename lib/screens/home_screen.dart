@@ -5,8 +5,10 @@ import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'check_in_screen.dart';
 import 'history_screen.dart';
+import 'professor_dashboard_screen.dart';
 
 /// Home screen with navigation to check-in and history.
+/// Shows different UI based on user role (professor vs aluno).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -17,12 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    _HomeContent(),
-    CheckInScreen(),
-    HistoryScreen(),
-  ];
-
   /// Public method to change tabs from child widgets.
   void setTab(int index) {
     setState(() => _currentIndex = index);
@@ -30,8 +26,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    // If user is professor, show professor dashboard
+    if (authProvider.isProfessor) {
+      return const ProfessorDashboardScreen();
+    }
+
+    // For students, show normal navigation
+    const screens = <Widget>[_HomeContent(), CheckInScreen(), HistoryScreen()];
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
