@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../widgets/feedback_dialogs.dart';
 import '../theme/app_theme.dart';
+import 'home_screen.dart';
 
 /// Screen for scanning QR codes and performing check-ins.
 class CheckInScreen extends StatefulWidget {
@@ -22,6 +23,14 @@ class _CheckInScreenState extends State<CheckInScreen>
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+
+  /// Navigate to home tab (index 0)
+  void _navigateToHome(BuildContext context) {
+    final homeState = context.findAncestorStateOfType<HomeScreenState>();
+    if (homeState != null) {
+      homeState.setTab(0);
+    }
+  }
 
   @override
   void initState() {
@@ -172,7 +181,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                     Row(
                       children: [
                         IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => _navigateToHome(context),
                           icon: const Icon(
                             Icons.arrow_back_ios,
                             color: Colors.white,

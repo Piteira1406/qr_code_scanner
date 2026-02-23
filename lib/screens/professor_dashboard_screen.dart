@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'qr_generator_screen.dart';
+import 'professor_attendance_screen.dart';
 
 /// Dashboard screen for professors to manage classes and generate QR codes.
 class ProfessorDashboardScreen extends StatelessWidget {
@@ -156,17 +157,9 @@ class ProfessorDashboardScreen extends StatelessWidget {
                       ],
                     ),
                     onTap: () {
-                      // TODO: Implement attendance view
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Funcionalidade em desenvolvimento',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: AppColors.textPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProfessorAttendanceScreen(),
                         ),
                       );
                     },

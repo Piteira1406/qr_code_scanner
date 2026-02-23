@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 
 /// Screen for professors to generate QR codes for their classes.
@@ -21,6 +23,7 @@ class _QRGeneratorScreenState extends State<QRGeneratorScreen> {
   final _durationController = TextEditingController(text: '120');
 
   final LocationService _locationService = LocationService();
+  final FirebaseService _firebaseService = FirebaseService();
 
   bool _isLoading = false;
   bool _isGenerating = false;
@@ -91,6 +94,12 @@ class _QRGeneratorScreenState extends State<QRGeneratorScreen> {
         endTime: now.add(Duration(minutes: duration)),
         location: _locationNameController.text.trim(),
       );
+
+      // Save event to Firestore
+      final user = context.read<AuthProvider>().currentUser;
+      if (user != null) {
+        await _firebaseService.saveEvent(_generatedEvent!, user.id);
+      }
 
       _qrCodeData = _generatedEvent!.toQRCodeData();
 
