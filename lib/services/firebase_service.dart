@@ -294,4 +294,216 @@ class FirebaseService {
     }
     return total;
   }
+
+  // ============ CHECK-IN VALIDATION (Professor) ============
+
+  /// Approve a check-in
+  Future<void> approveCheckIn(String checkInId, String professorId) async {
+    await _checkInsCollection.doc(checkInId).update({
+      'status': 'approved',
+      'validatedBy': professorId,
+      'validatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Reject a check-in
+  Future<void> rejectCheckIn(String checkInId, String professorId) async {
+    await _checkInsCollection.doc(checkInId).update({
+      'status': 'rejected',
+      'validatedBy': professorId,
+      'validatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Get live stream of check-ins for an event (real-time updates)
+  Stream<List<Map<String, dynamic>>> getLiveEventCheckIns(String eventId) {
+    return _checkInsCollection
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .asyncMap((snapshot) async {
+          final checkIns = <Map<String, dynamic>>[];
+
+          for (final doc in snapshot.docs) {
+            final data = doc.data();
+            final userId = data['userId'] as String?;
+
+            String userName = 'Desconhecido';
+            String userNumber = 'N/A';
+            String userEmail = '';
+
+            if (userId != null) {
+              final userDoc = await _usersCollection.doc(userId).get();
+              if (userDoc.exists) {
+                userName = userDoc.data()?['name'] ?? 'Desconhecido';
+                userNumber = userDoc.data()?['studentNumber'] ?? 'N/A';
+                userEmail = userDoc.data()?['email'] ?? '';
+              }
+            }
+
+            checkIns.add({
+              'checkIn': CheckIn.fromJson({...data, 'id': doc.id}),
+              'userName': userName,
+              'userNumber': userNumber,
+              'userEmail': userEmail,
+            });
+          }
+
+          // Sort by check-in time (most recent first)
+          checkIns.sort((a, b) {
+            final checkInA = a['checkIn'] as CheckIn;
+            final checkInB = b['checkIn'] as CheckIn;
+            return checkInB.checkInTime.compareTo(checkInA.checkInTime);
+          });
+
+          return checkIns;
+        });
+  }
+
+  // ============ EVENT CRUD (Professor) ============
+
+  /// Update an existing event
+  Future<void> updateEvent(Event event) async {
+    await _eventsCollection.doc(event.id).update(event.toJson());
+  }
+
+  /// Delete an event and its check-ins
+  Future<void> deleteEvent(String eventId) async {
+    // Delete all check-ins for this event
+    final checkIns = await _checkInsCollection
+        .where('eventId', isEqualTo: eventId)
+        .get();
+
+    for (final doc in checkIns.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete the event
+    await _eventsCollection.doc(eventId).delete();
+  }
+
+  /// Close an event (no more check-ins allowed)
+  Future<void> closeEvent(String eventId) async {
+    await _eventsCollection.doc(eventId).update({'status': 'closed'});
+  }
+
+  /// Reopen an event
+  Future<void> reopenEvent(String eventId) async {
+    await _eventsCollection.doc(eventId).update({'status': 'active'});
+  }
+
+  // ============ STATISTICS (Professor) ============
+
+  /// Get statistics for a professor's events
+  Future<Map<String, dynamic>> getProfessorStatistics(
+    String professorId,
+  ) async {
+    final events = await _eventsCollection
+        .where('professorId', isEqualTo: professorId)
+        .get();
+
+    int totalEvents = events.docs.length;
+    int activeEvents = 0;
+    int totalCheckIns = 0;
+    int approvedCheckIns = 0;
+    int pendingCheckIns = 0;
+    int rejectedCheckIns = 0;
+    Map<String, int> checkInsPerEvent = {};
+    Map<String, int> checkInsPerDay = {};
+
+    final now = DateTime.now();
+
+    for (final eventDoc in events.docs) {
+      final eventData = eventDoc.data();
+      final endTime = DateTime.parse(eventData['endTime'] as String);
+
+      if (endTime.isAfter(now)) {
+        activeEvents++;
+      }
+
+      final checkIns = await _checkInsCollection
+          .where('eventId', isEqualTo: eventDoc.id)
+          .get();
+
+      final eventName = eventData['name'] as String;
+      checkInsPerEvent[eventName] = checkIns.docs.length;
+      totalCheckIns += checkIns.docs.length;
+
+      for (final checkInDoc in checkIns.docs) {
+        final checkInData = checkInDoc.data();
+        final status = checkInData['status'] as String? ?? 'pending';
+
+        switch (status) {
+          case 'approved':
+            approvedCheckIns++;
+            break;
+          case 'rejected':
+            rejectedCheckIns++;
+            break;
+          default:
+            pendingCheckIns++;
+        }
+
+        // Group by day
+        final checkInTime = DateTime.parse(
+          checkInData['checkInTime'] as String,
+        );
+        final dayKey = '${checkInTime.day}/${checkInTime.month}';
+        checkInsPerDay[dayKey] = (checkInsPerDay[dayKey] ?? 0) + 1;
+      }
+    }
+
+    return {
+      'totalEvents': totalEvents,
+      'activeEvents': activeEvents,
+      'totalCheckIns': totalCheckIns,
+      'approvedCheckIns': approvedCheckIns,
+      'pendingCheckIns': pendingCheckIns,
+      'rejectedCheckIns': rejectedCheckIns,
+      'checkInsPerEvent': checkInsPerEvent,
+      'checkInsPerDay': checkInsPerDay,
+    };
+  }
+
+  /// Get all check-ins for PDF export
+  Future<List<Map<String, dynamic>>> getEventCheckInsForExport(
+    String eventId,
+  ) async {
+    final checkIns = await _checkInsCollection
+        .where('eventId', isEqualTo: eventId)
+        .get();
+
+    final result = <Map<String, dynamic>>[];
+
+    for (final doc in checkIns.docs) {
+      final data = doc.data();
+      final userId = data['userId'] as String?;
+
+      String userName = 'Desconhecido';
+      String userNumber = 'N/A';
+      String userEmail = '';
+
+      if (userId != null) {
+        final userDoc = await _usersCollection.doc(userId).get();
+        if (userDoc.exists) {
+          userName = userDoc.data()?['name'] ?? 'Desconhecido';
+          userNumber = userDoc.data()?['studentNumber'] ?? 'N/A';
+          userEmail = userDoc.data()?['email'] ?? '';
+        }
+      }
+
+      result.add({
+        'checkIn': CheckIn.fromJson({...data, 'id': doc.id}),
+        'userName': userName,
+        'userNumber': userNumber,
+        'userEmail': userEmail,
+      });
+    }
+
+    // Sort by name
+    result.sort(
+      (a, b) => (a['userName'] as String).compareTo(b['userName'] as String),
+    );
+
+    return result;
+  }
 }

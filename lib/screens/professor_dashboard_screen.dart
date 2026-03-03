@@ -4,6 +4,8 @@ import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'qr_generator_screen.dart';
 import 'professor_attendance_screen.dart';
+import 'event_management_screen.dart';
+import 'statistics_screen.dart';
 
 /// Dashboard screen for professors to manage classes and generate QR codes.
 class ProfessorDashboardScreen extends StatelessWidget {
@@ -160,6 +162,43 @@ class ProfessorDashboardScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ProfessorAttendanceScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Manage events
+                  _buildActionCard(
+                    context,
+                    icon: Icons.event_note_rounded,
+                    title: 'Gerir Eventos',
+                    description:
+                        'Edite, feche ou elimine eventos e veja o live feed',
+                    gradient: LinearGradient(
+                      colors: [Colors.orange, Colors.orange.shade700],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EventManagementScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Statistics
+                  _buildActionCard(
+                    context,
+                    icon: Icons.bar_chart_rounded,
+                    title: 'Estatísticas',
+                    description: 'Visualize gráficos e métricas das suas aulas',
+                    gradient: LinearGradient(
+                      colors: [Colors.purple, Colors.purple.shade700],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const StatisticsScreen(),
                         ),
                       );
                     },

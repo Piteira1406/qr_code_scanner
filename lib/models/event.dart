@@ -1,3 +1,9 @@
+/// Status of an event.
+enum EventStatus {
+  active, // Event is open for check-ins
+  closed, // Event is closed
+}
+
 /// Model representing an event or class that students can check into.
 class Event {
   final String id;
@@ -8,6 +14,8 @@ class Event {
   final DateTime startTime;
   final DateTime endTime;
   final String location;
+  final int? maxCapacity;
+  final EventStatus status;
 
   Event({
     required this.id,
@@ -18,6 +26,8 @@ class Event {
     required this.startTime,
     required this.endTime,
     required this.location,
+    this.maxCapacity,
+    this.status = EventStatus.active,
   });
 
   /// Creates an Event from a JSON map.
@@ -31,6 +41,11 @@ class Event {
       startTime: DateTime.parse(json['startTime'] as String),
       endTime: DateTime.parse(json['endTime'] as String),
       location: json['location'] as String,
+      maxCapacity: json['maxCapacity'] as int?,
+      status: EventStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => EventStatus.active,
+      ),
     );
   }
 
@@ -45,7 +60,45 @@ class Event {
       'startTime': startTime.toIso8601String(),
       'endTime': endTime.toIso8601String(),
       'location': location,
+      'maxCapacity': maxCapacity,
+      'status': status.name,
     };
+  }
+
+  /// Returns a copy with updated fields.
+  Event copyWith({
+    String? name,
+    String? description,
+    double? latitude,
+    double? longitude,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? location,
+    int? maxCapacity,
+    EventStatus? status,
+  }) {
+    return Event(
+      id: id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      location: location ?? this.location,
+      maxCapacity: maxCapacity ?? this.maxCapacity,
+      status: status ?? this.status,
+    );
+  }
+
+  /// Check if event is currently active.
+  bool get isActive => status == EventStatus.active;
+  bool get isClosed => status == EventStatus.closed;
+
+  /// Check if event is within time bounds.
+  bool get isOngoing {
+    final now = DateTime.now();
+    return now.isAfter(startTime) && now.isBefore(endTime);
   }
 
   /// Creates an Event from QR Code data.

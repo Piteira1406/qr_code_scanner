@@ -1,5 +1,12 @@
 import 'event.dart';
 
+/// Status of a check-in for professor validation.
+enum CheckInStatus {
+  pending, // Awaiting professor validation
+  approved, // Approved by professor
+  rejected, // Rejected by professor
+}
+
 /// Model representing a confirmed check-in record.
 class CheckIn {
   final String id;
@@ -10,6 +17,9 @@ class CheckIn {
   final double userLatitude;
   final double userLongitude;
   final double distanceToEvent;
+  final CheckInStatus status;
+  final String? validatedBy;
+  final DateTime? validatedAt;
 
   CheckIn({
     required this.id,
@@ -20,6 +30,9 @@ class CheckIn {
     required this.userLatitude,
     required this.userLongitude,
     required this.distanceToEvent,
+    this.status = CheckInStatus.pending,
+    this.validatedBy,
+    this.validatedAt,
   });
 
   /// Creates a CheckIn from an Event and user location data.
@@ -38,6 +51,7 @@ class CheckIn {
       userLatitude: userLatitude,
       userLongitude: userLongitude,
       distanceToEvent: distance,
+      status: CheckInStatus.pending,
     );
   }
 
@@ -52,6 +66,14 @@ class CheckIn {
       userLatitude: (json['userLatitude'] as num).toDouble(),
       userLongitude: (json['userLongitude'] as num).toDouble(),
       distanceToEvent: (json['distanceToEvent'] as num).toDouble(),
+      status: CheckInStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => CheckInStatus.pending,
+      ),
+      validatedBy: json['validatedBy'] as String?,
+      validatedAt: json['validatedAt'] != null
+          ? DateTime.parse(json['validatedAt'] as String)
+          : null,
     );
   }
 
@@ -66,8 +88,44 @@ class CheckIn {
       'userLatitude': userLatitude,
       'userLongitude': userLongitude,
       'distanceToEvent': distanceToEvent,
+      'status': status.name,
+      'validatedBy': validatedBy,
+      'validatedAt': validatedAt?.toIso8601String(),
     };
   }
+
+  /// Returns a copy with updated status.
+  CheckIn copyWith({
+    CheckInStatus? status,
+    String? validatedBy,
+    DateTime? validatedAt,
+  }) {
+    return CheckIn(
+      id: id,
+      eventId: eventId,
+      eventName: eventName,
+      eventLocation: eventLocation,
+      checkInTime: checkInTime,
+      userLatitude: userLatitude,
+      userLongitude: userLongitude,
+      distanceToEvent: distanceToEvent,
+      status: status ?? this.status,
+      validatedBy: validatedBy ?? this.validatedBy,
+      validatedAt: validatedAt ?? this.validatedAt,
+    );
+  }
+
+  /// Returns status display name in Portuguese.
+  String get statusDisplayName => switch (status) {
+    CheckInStatus.pending => 'Pendente',
+    CheckInStatus.approved => 'Aprovado',
+    CheckInStatus.rejected => 'Rejeitado',
+  };
+
+  /// Returns status color.
+  bool get isPending => status == CheckInStatus.pending;
+  bool get isApproved => status == CheckInStatus.approved;
+  bool get isRejected => status == CheckInStatus.rejected;
 
   /// Returns a formatted date string for display.
   String get formattedDate {
