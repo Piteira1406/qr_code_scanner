@@ -174,26 +174,23 @@ class FirebaseService {
   }
 
   /// Get check-ins for a specific user
-  /// Note: Sorting done on client to avoid composite index requirement
   Stream<List<CheckIn>> getUserCheckIns(String userId) {
     return _checkInsCollection
         .where('userId', isEqualTo: userId)
+        .orderBy('checkInTime', descending: true)
         .snapshots()
-        .map((snapshot) {
-          final checkIns = snapshot.docs
+        .map(
+          (snapshot) => snapshot.docs
               .map((doc) => CheckIn.fromJson({...doc.data(), 'id': doc.id}))
-              .toList();
-          // Sort on client side to avoid needing composite index
-          checkIns.sort((a, b) => b.checkInTime.compareTo(a.checkInTime));
-          return checkIns;
-        });
+              .toList(),
+        );
   }
 
   /// Get all check-ins for a specific event (for professors)
-  /// Note: Sorting done on client to avoid composite index requirement
   Stream<List<Map<String, dynamic>>> getEventCheckIns(String eventId) {
     return _checkInsCollection
         .where('eventId', isEqualTo: eventId)
+        .orderBy('checkInTime', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
           final checkIns = <Map<String, dynamic>>[];
@@ -221,13 +218,6 @@ class FirebaseService {
             });
           }
 
-          // Sort on client side to avoid needing composite index
-          checkIns.sort((a, b) {
-            final checkInA = a['checkIn'] as CheckIn;
-            final checkInB = b['checkIn'] as CheckIn;
-            return checkInB.checkInTime.compareTo(checkInA.checkInTime);
-          });
-
           return checkIns;
         });
   }
@@ -253,19 +243,16 @@ class FirebaseService {
   }
 
   /// Get events created by a professor
-  /// Note: Sorting done on client to avoid composite index requirement
   Stream<List<Event>> getProfessorEvents(String professorId) {
     return _eventsCollection
         .where('professorId', isEqualTo: professorId)
+        .orderBy('startTime', descending: true)
         .snapshots()
-        .map((snapshot) {
-          final events = snapshot.docs
+        .map(
+          (snapshot) => snapshot.docs
               .map((doc) => Event.fromJson({...doc.data(), 'id': doc.id}))
-              .toList();
-          // Sort on client side to avoid needing composite index
-          events.sort((a, b) => b.startTime.compareTo(a.startTime));
-          return events;
-        });
+              .toList(),
+        );
   }
 
   /// Get active events (for professors dashboard)

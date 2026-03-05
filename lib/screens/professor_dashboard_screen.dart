@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'qr_generator_screen.dart';
-import 'professor_attendance_screen.dart';
-import 'event_management_screen.dart';
-import 'statistics_screen.dart';
 
 /// Dashboard screen for professors to manage classes and generate QR codes.
 class ProfessorDashboardScreen extends StatelessWidget {
@@ -159,9 +156,17 @@ class ProfessorDashboardScreen extends StatelessWidget {
                       ],
                     ),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ProfessorAttendanceScreen(),
+                      // TODO: Implement attendance view
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            'Funcionalidade em desenvolvimento',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: AppColors.textPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       );
                     },
@@ -196,9 +201,17 @@ class ProfessorDashboardScreen extends StatelessWidget {
                       colors: [Colors.purple, Colors.purple.shade700],
                     ),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const StatisticsScreen(),
+                      // TODO: Implement attendance view
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            'Funcionalidade em desenvolvimento',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: AppColors.textPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       );
                     },

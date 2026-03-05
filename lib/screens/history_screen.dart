@@ -3,27 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
 
 /// Screen displaying the history of confirmed check-ins.
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
-
-  /// Navigate to home tab (index 0)
-  void _navigateToHome(BuildContext context) {
-    final homeState = context.findAncestorStateOfType<HomeScreenState>();
-    if (homeState != null) {
-      homeState.setTab(0);
-    }
-  }
-
-  /// Navigate to check-in tab (index 1)
-  void _navigateToCheckIn(BuildContext context) {
-    final homeState = context.findAncestorStateOfType<HomeScreenState>();
-    if (homeState != null) {
-      homeState.setTab(1);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +38,7 @@ class HistoryScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            onPressed: () => _navigateToHome(context),
+                            onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(
                               Icons.arrow_back_ios,
                               color: Colors.white,
@@ -221,7 +204,7 @@ class HistoryScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ElevatedButton.icon(
-                onPressed: () => _navigateToCheckIn(context),
+                onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('Fazer Check-in'),
                 style: ElevatedButton.styleFrom(

@@ -13,10 +13,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
   /// Public method to change tabs from child widgets.
@@ -442,7 +442,7 @@ class _HomeContent extends StatelessWidget {
   }
 
   void _navigateToTab(BuildContext context, int index) {
-    context.findAncestorStateOfType<HomeScreenState>()?.setTab(index);
+    context.findAncestorStateOfType<_HomeScreenState>()?.setTab(index);
   }
 
   Widget _buildActionCard(
