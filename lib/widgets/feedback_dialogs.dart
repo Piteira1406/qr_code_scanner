@@ -14,10 +14,7 @@ class FeedbackDialogs {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _SuccessDialog(
-        event: event,
-        distance: distance,
-      ),
+      builder: (context) => _SuccessDialog(event: event, distance: distance),
     );
   }
 
@@ -30,10 +27,8 @@ class FeedbackDialogs {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _ErrorDialog(
-        errorType: errorType,
-        errorMessage: errorMessage,
-      ),
+      builder: (context) =>
+          _ErrorDialog(errorType: errorType, errorMessage: errorMessage),
     );
   }
 }
@@ -43,10 +38,7 @@ class _SuccessDialog extends StatefulWidget {
   final Event event;
   final double distance;
 
-  const _SuccessDialog({
-    required this.event,
-    required this.distance,
-  });
+  const _SuccessDialog({required this.event, required this.distance});
 
   @override
   State<_SuccessDialog> createState() => _SuccessDialogState();
@@ -99,7 +91,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Animated checkmark with gradient background
+              // Animated icon with gradient background - Hourglass for pending
               ScaleTransition(
                 scale: _scaleAnimation,
                 child: Container(
@@ -108,30 +100,28 @@ class _SuccessDialogState extends State<_SuccessDialog>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.success.withAlpha(51),
-                        AppColors.success.withAlpha(102),
+                        AppColors.warning.withAlpha(51),
+                        AppColors.warning.withAlpha(102),
                       ],
                     ),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.check_circle_rounded,
-                    size: 56,
-                    color: AppColors.success,
+                    Icons.hourglass_empty_rounded,
+                    size: 48,
+                    color: AppColors.warning,
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               // Title
               Text(
-                'Check-in Confirmado!',
-                style: AppTextStyles.h2.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                'Presença Pendente',
+                style: AppTextStyles.h2.copyWith(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
-                'A sua presença foi registada com sucesso.',
+                'O seu check-in foi enviado e aguarda validação do professor.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
@@ -148,7 +138,11 @@ class _SuccessDialogState extends State<_SuccessDialog>
                 ),
                 child: Column(
                   children: [
-                    _buildInfoRow(Icons.event_rounded, 'Evento', widget.event.name),
+                    _buildInfoRow(
+                      Icons.event_rounded,
+                      'Evento',
+                      widget.event.name,
+                    ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.location_on_rounded,
@@ -175,13 +169,13 @@ class _SuccessDialogState extends State<_SuccessDialog>
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.success, Color(0xFF059669)],
+                  gradient: LinearGradient(
+                    colors: [AppColors.warning, AppColors.warning.withRed(230)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.success.withAlpha(77),
+                      color: AppColors.warning.withAlpha(77),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -199,11 +193,8 @@ class _SuccessDialogState extends State<_SuccessDialog>
                     ),
                   ),
                   child: const Text(
-                    'Concluir',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    'Entendido',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -221,10 +212,10 @@ class _SuccessDialogState extends State<_SuccessDialog>
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.success.withAlpha(26),
+            color: AppColors.primaryStart.withAlpha(26),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 20, color: AppColors.success),
+          child: Icon(icon, size: 20, color: AppColors.primaryStart),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -252,7 +243,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
 
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:'
-           '${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }
 
@@ -261,10 +252,7 @@ class _ErrorDialog extends StatefulWidget {
   final CheckInErrorType errorType;
   final String errorMessage;
 
-  const _ErrorDialog({
-    required this.errorType,
-    required this.errorMessage,
-  });
+  const _ErrorDialog({required this.errorType, required this.errorMessage});
 
   @override
   State<_ErrorDialog> createState() => _ErrorDialogState();
@@ -283,16 +271,19 @@ class _ErrorDialogState extends State<_ErrorDialog>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: -12), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -12, end: 12), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 12, end: -12), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -12, end: 12), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 12, end: 0), weight: 1),
-    ]).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _shakeAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0, end: -12), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: -12, end: 12), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 12, end: -12), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -12, end: 12), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 12, end: 0), weight: 1),
+        ]).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -346,20 +337,14 @@ class _ErrorDialogState extends State<_ErrorDialog>
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    errorData.icon,
-                    size: 48,
-                    color: errorData.color,
-                  ),
+                  child: Icon(errorData.icon, size: 48, color: errorData.color),
                 ),
               ),
               const SizedBox(height: 24),
               // Error title
               Text(
                 errorData.title,
-                style: AppTextStyles.h2.copyWith(
-                  color: errorData.color,
-                ),
+                style: AppTextStyles.h2.copyWith(color: errorData.color),
               ),
               const SizedBox(height: 8),
               Text(
@@ -377,9 +362,7 @@ class _ErrorDialogState extends State<_ErrorDialog>
                 decoration: BoxDecoration(
                   color: errorData.color.withAlpha(13),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: errorData.color.withAlpha(38),
-                  ),
+                  border: Border.all(color: errorData.color.withAlpha(38)),
                 ),
                 child: Row(
                   children: [
@@ -438,10 +421,7 @@ class _ErrorDialogState extends State<_ErrorDialog>
                   ),
                   child: const Text(
                     'Tentar Novamente',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -459,14 +439,16 @@ class _ErrorDialogState extends State<_ErrorDialog>
           title: 'QR Code Inválido',
           icon: Icons.qr_code_2_rounded,
           color: AppColors.error,
-          helpText: 'Certifique-se de que está a ler um QR Code válido do ISTEC.',
+          helpText:
+              'Certifique-se de que está a ler um QR Code válido do ISTEC.',
         );
       case CheckInErrorType.invalidLocation:
         return _ErrorData(
           title: 'Localização Incorreta',
           icon: Icons.location_off_rounded,
           color: AppColors.warning,
-          helpText: 'Deve estar a menos de 100 metros do local do evento para fazer check-in.',
+          helpText:
+              'Deve estar a menos de 100 metros do local do evento para fazer check-in.',
         );
       case CheckInErrorType.noConnection:
         return _ErrorData(
@@ -480,7 +462,8 @@ class _ErrorDialogState extends State<_ErrorDialog>
           title: 'Permissões Necessárias',
           icon: Icons.no_accounts_rounded,
           color: AppColors.primaryEnd,
-          helpText: 'Por favor, ative as permissões de localização nas definições do dispositivo.',
+          helpText:
+              'Por favor, ative as permissões de localização nas definições do dispositivo.',
         );
       case CheckInErrorType.unknown:
         return _ErrorData(

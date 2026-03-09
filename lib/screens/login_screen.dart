@@ -137,45 +137,54 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildHeader() {
     return Column(
       children: [
-        // Animated logo with gradient
+        // Animated logo with gradient - University/Institution icon
         Container(
-          width: 100,
-          height: 100,
+          width: 88,
+          height: 88,
           decoration: BoxDecoration(
             gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryStart.withValues(alpha: 0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
+                color: AppColors.primaryStart.withValues(alpha: 0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: const Icon(
-            Icons.qr_code_scanner_rounded,
-            size: 48,
+            Icons.account_balance_rounded,
+            size: 44,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         ShaderMask(
           shaderCallback: (bounds) =>
               AppColors.primaryGradient.createShader(bounds),
           child: const Text(
-            'ISTEC Check-in',
+            'ISTEC Login',
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
+              letterSpacing: -0.5,
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Sistema de Presenças Digital',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primaryStart.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Sistema de Presenças',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.primaryStart,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],

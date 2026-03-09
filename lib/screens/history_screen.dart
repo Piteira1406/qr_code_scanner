@@ -335,22 +335,22 @@ class HistoryScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Success indicator with gradient
+                // Status indicator with gradient
                 Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.success.withAlpha(38),
-                        AppColors.success.withAlpha(77),
+                        _getStatusColor(checkIn.status).withAlpha(38),
+                        _getStatusColor(checkIn.status).withAlpha(77),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: AppColors.success,
+                  child: Icon(
+                    _getStatusIcon(checkIn.status),
+                    color: _getStatusColor(checkIn.status),
                     size: 28,
                   ),
                 ),
@@ -393,7 +393,7 @@ class HistoryScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Time
+                // Time and status
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -403,15 +403,29 @@ class HistoryScreen extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: _getStatusColor(checkIn.status).withAlpha(26),
                         borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        checkIn.formattedTime,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                        border: Border.all(
+                          color: _getStatusColor(checkIn.status).withAlpha(77),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getStatusIcon(checkIn.status),
+                            size: 12,
+                            color: _getStatusColor(checkIn.status),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            checkIn.formattedTime,
+                            style: AppTextStyles.caption.copyWith(
+                              color: _getStatusColor(checkIn.status),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -465,6 +479,30 @@ class HistoryScreen extends StatelessWidget {
     return '$day de ${months[month - 1]}';
   }
 
+  Color _getStatusColor(CheckInStatus status) {
+    return switch (status) {
+      CheckInStatus.pending => AppColors.warning,
+      CheckInStatus.approved => AppColors.success,
+      CheckInStatus.rejected => AppColors.error,
+    };
+  }
+
+  IconData _getStatusIcon(CheckInStatus status) {
+    return switch (status) {
+      CheckInStatus.pending => Icons.hourglass_empty_rounded,
+      CheckInStatus.approved => Icons.check_circle_rounded,
+      CheckInStatus.rejected => Icons.cancel_rounded,
+    };
+  }
+
+  String _getStatusLabel(CheckInStatus status) {
+    return switch (status) {
+      CheckInStatus.pending => 'Pendente',
+      CheckInStatus.approved => 'Confirmado',
+      CheckInStatus.rejected => 'Rejeitado',
+    };
+  }
+
   void _showCheckInDetails(BuildContext context, CheckIn checkIn) {
     showModalBottomSheet(
       context: context,
@@ -507,15 +545,15 @@ class HistoryScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.success.withAlpha(51),
-                            AppColors.success.withAlpha(77),
+                            _getStatusColor(checkIn.status).withAlpha(51),
+                            _getStatusColor(checkIn.status).withAlpha(77),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppColors.success,
+                      child: Icon(
+                        _getStatusIcon(checkIn.status),
+                        color: _getStatusColor(checkIn.status),
                         size: 34,
                       ),
                     ),
@@ -525,9 +563,9 @@ class HistoryScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Presença Confirmada',
+                            _getStatusLabel(checkIn.status),
                             style: AppTextStyles.h3.copyWith(
-                              color: AppColors.textPrimary,
+                              color: _getStatusColor(checkIn.status),
                             ),
                           ),
                           Text(

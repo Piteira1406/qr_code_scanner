@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import 'qr_generator_screen.dart';
+import 'event_management_screen.dart';
 
 /// Dashboard screen for professors to manage classes and generate QR codes.
 class ProfessorDashboardScreen extends StatelessWidget {
@@ -371,34 +372,34 @@ class ProfessorDashboardScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: (gradient as LinearGradient).colors.first.withAlpha(77),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: (gradient as LinearGradient).colors.first.withAlpha(51),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(38),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withAlpha(30),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 28),
+                  child: Icon(icon, color: Colors.white, size: 26),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,25 +408,34 @@ class ProfessorDashboardScreen extends StatelessWidget {
                         title,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         description,
                         style: TextStyle(
-                          color: Colors.white.withAlpha(204),
+                          color: Colors.white.withAlpha(200),
                           fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white.withAlpha(179),
-                  size: 20,
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(25),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white.withAlpha(200),
+                    size: 18,
+                  ),
                 ),
               ],
             ),
@@ -442,30 +452,24 @@ class ProfessorDashboardScreen extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(13),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withAlpha(51), width: 1),
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withAlpha(26),
+              color: color.withAlpha(20),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,6 +478,7 @@ class ProfessorDashboardScreen extends StatelessWidget {
                   title,
                   style: AppTextStyles.bodyBold.copyWith(
                     color: AppColors.textPrimary,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -481,6 +486,7 @@ class ProfessorDashboardScreen extends StatelessWidget {
                   description,
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.textSecondary,
+                    fontSize: 12,
                   ),
                 ),
               ],

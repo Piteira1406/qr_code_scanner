@@ -149,14 +149,27 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _primaryColor.withValues(alpha: 0.1),
+        color: AppColors.primaryStart.withValues(alpha: 0.06),
         border: Border(
-          bottom: BorderSide(color: _primaryColor.withValues(alpha: 0.3)),
+          bottom: BorderSide(
+            color: AppColors.primaryStart.withValues(alpha: 0.15),
+          ),
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.event, color: _primaryColor),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primaryStart.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.event_rounded,
+              color: AppColors.primaryStart,
+              size: 22,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -164,11 +177,18 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
               children: [
                 Text(
                   widget.event.location,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${_formatDateTime(widget.event.startTime)} - ${_formatTime(widget.event.endTime)}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -177,7 +197,9 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: widget.event.isOngoing ? Colors.green : Colors.orange,
+              color: widget.event.isOngoing
+                  ? AppColors.success
+                  : AppColors.warning,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -240,8 +262,23 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
     final userNumber = item['userNumber'] as String;
     final userEmail = item['userEmail'] as String;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _getStatusColor(checkIn.status).withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -250,13 +287,17 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
             // Header with user info and status
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: _getStatusColor(
-                    checkIn.status,
-                  ).withOpacity(0.2),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(checkIn.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: Icon(
-                    Icons.person,
+                    _getStatusIcon(checkIn.status),
                     color: _getStatusColor(checkIn.status),
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -267,7 +308,7 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
                       Text(
                         userName,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
@@ -320,30 +361,71 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
 
             // Actions (only for pending)
             if (checkIn.isPending) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _rejectCheckIn(checkIn.id, professorId),
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      label: const Text(
-                        'Rejeitar',
-                        style: TextStyle(color: Colors.red),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.error.withOpacity(0.3),
+                        ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            _rejectCheckIn(checkIn.id, professorId),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Rejeitar',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _approveCheckIn(checkIn.id, professorId),
-                      icon: const Icon(Icons.check),
-                      label: const Text('Aprovar'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.success, Color(0xFF16A34A)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            _approveCheckIn(checkIn.id, professorId),
+                        icon: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Aprovar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -388,22 +470,41 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _getStatusColor(status)),
       ),
-      child: Text(
-        _getStatusLabel(status),
-        style: TextStyle(
-          color: _getStatusColor(status),
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _getStatusIcon(status),
+            size: 14,
+            color: _getStatusColor(status),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _getStatusLabel(status),
+            style: TextStyle(
+              color: _getStatusColor(status),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  IconData _getStatusIcon(CheckInStatus status) {
+    return switch (status) {
+      CheckInStatus.pending => Icons.hourglass_empty_rounded,
+      CheckInStatus.approved => Icons.check_circle_rounded,
+      CheckInStatus.rejected => Icons.cancel_rounded,
+    };
+  }
+
   Color _getStatusColor(CheckInStatus status) {
     return switch (status) {
-      CheckInStatus.pending => Colors.orange,
-      CheckInStatus.approved => Colors.green,
-      CheckInStatus.rejected => Colors.red,
+      CheckInStatus.pending => AppColors.warning,
+      CheckInStatus.approved => AppColors.success,
+      CheckInStatus.rejected => AppColors.error,
     };
   }
 
